@@ -32,6 +32,7 @@ class MarkdownBrowserApp(App[None]):
         self.translation_state = DocumentTranslationState()
         self._translation_request_id = 0
         self._active_translation_request_id: int | None = None
+        self._scroll_positions: dict[tuple[str, str], float] = {}
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -39,6 +40,7 @@ class MarkdownBrowserApp(App[None]):
             yield MarkdownTree(self.root_path)
             with ContentSwitcher(initial="viewer", id="viewer-switcher"):
                 yield Static("왼쪽 트리에서 Markdown 파일을 선택하세요", id="viewer")
+                yield Static("한국어 번역 준비 중...\n\n첫 번째 번역 조각을 기다리는 중입니다.", id="translation-pending")
                 yield Markdown(id="markdown-view")
         yield Static(str(self.root_path), id="status")
         yield Footer()
@@ -64,13 +66,17 @@ class MarkdownBrowserApp(App[None]):
             self.open_markdown(path)
 
     def open_markdown(self, path: Path) -> None:
+        self._remember_current_scroll()
+        self._cancel_translation_render_workers()
         markdown = path.read_text(encoding="utf-8")
         self.current_file = path
         self.current_markdown = markdown
         self.current_view_markdown = markdown
         self.show_translation = False
         self._active_translation_request_id = None
-        self.query_one("#markdown-view", Markdown).update(markdown)
+        viewer = self.query_one("#markdown-view", Markdown)
+        viewer.update(markdown)
+        self._restore_scroll_for_current_view()
         self.query_one("#viewer-switcher", ContentSwitcher).current = "markdown-view"
         self.set_status(str(path))
 
@@ -80,11 +86,15 @@ class MarkdownBrowserApp(App[None]):
 
         path_key = str(self.current_file)
         if self.show_translation:
+            self._remember_current_scroll()
             self._active_translation_request_id = None
+            self._cancel_translation_render_workers()
             self.translation_state.visible_paths.discard(path_key)
             self.show_translation = False
             self.current_view_markdown = self.current_markdown
-            self.query_one("#markdown-view", Markdown).update(self.current_markdown)
+            viewer = self.query_one("#markdown-view", Markdown)
+            viewer.update(self.current_markdown)
+            self._restore_scroll_for_current_view()
             self.query_one("#viewer-switcher", ContentSwitcher).current = "markdown-view"
             self.set_status("번역 취소됨")
             return
@@ -106,22 +116,28 @@ class MarkdownBrowserApp(App[None]):
                 )
 
         if translated is not None:
+            self._remember_current_scroll()
             self.translation_state.visible_paths.add(path_key)
             self.show_translation = True
             self.current_view_markdown = translated
-            self.query_one("#markdown-view", Markdown).update(translated)
+            viewer = self.query_one("#markdown-view", Markdown)
+            viewer.update(translated)
+            self._restore_scroll_for_current_view()
             self.query_one("#viewer-switcher", ContentSwitcher).current = "markdown-view"
             self.set_status("캐시된 번역 불러옴")
             return
 
         self._translation_request_id += 1
         self._active_translation_request_id = self._translation_request_id
+        self._remember_current_scroll()
         self.translation_state.visible_paths.add(path_key)
         self.show_translation = True
         self.current_view_markdown = ""
-        self.query_one("#markdown-view", Markdown).update("")
-        self.query_one("#viewer-switcher", ContentSwitcher).current = "markdown-view"
-        self.set_status("번역 중...")
+        self.query_one("#translation-pending", Static).update(
+            "한국어 번역 준비 중...\n\n첫 번째 번역 조각을 기다리는 중입니다."
+        )
+        self.query_one("#viewer-switcher", ContentSwitcher).current = "translation-pending"
+        self.set_status("번역 시작")
         self.run_translation_worker(
             self._translation_request_id,
             self.current_file,
@@ -205,10 +221,40 @@ class MarkdownBrowserApp(App[None]):
         if not self._should_render_translation(request_id, path):
             return
 
+        viewer = self.query_one("#markdown-view", Markdown)
+        previous = self.current_view_markdown or ""
         self.current_view_markdown = partial
-        self.query_one("#markdown-view", Markdown).update(partial)
-        self.query_one("#viewer-switcher", ContentSwitcher).current = "markdown-view"
         self.set_status(f"번역 중 {completed}/{total}")
+
+        if not previous:
+            self.run_worker(
+                self._replace_translation_view(request_id, path, partial, True),
+                group="translation-render",
+                exclusive=True,
+                exit_on_error=False,
+            )
+            return
+
+        if partial.startswith(previous):
+            delta = partial[len(previous) :]
+            if not delta:
+                return
+
+            keep_bottom = viewer.max_scroll_y - viewer.scroll_y <= 1
+            self.run_worker(
+                self._append_translation_view(request_id, path, delta, keep_bottom),
+                group="translation-render",
+                exclusive=True,
+                exit_on_error=False,
+            )
+            return
+
+        self.run_worker(
+            self._replace_translation_view(request_id, path, partial, False),
+            group="translation-render",
+            exclusive=True,
+            exit_on_error=False,
+        )
 
     def finish_translation(
         self,
@@ -225,9 +271,16 @@ class MarkdownBrowserApp(App[None]):
             return
 
         self.show_translation = True
-        self.current_view_markdown = translated
-        self.query_one("#markdown-view", Markdown).update(translated)
-        self.query_one("#viewer-switcher", ContentSwitcher).current = "markdown-view"
+        if self.current_view_markdown != translated:
+            self.current_view_markdown = translated
+            self.run_worker(
+                self._replace_translation_view(request_id, path, translated, False),
+                group="translation-render",
+                exclusive=True,
+                exit_on_error=False,
+            )
+        else:
+            self.query_one("#viewer-switcher", ContentSwitcher).current = "markdown-view"
         self.set_status("한국어 번역 보기")
 
     def handle_translation_error(
@@ -242,7 +295,9 @@ class MarkdownBrowserApp(App[None]):
         self.show_translation = False
         if self.current_markdown is not None:
             self.current_view_markdown = self.current_markdown
-            self.query_one("#markdown-view", Markdown).update(self.current_markdown)
+            viewer = self.query_one("#markdown-view", Markdown)
+            viewer.update(self.current_markdown)
+            self._restore_scroll_for_current_view()
         self.set_status(f"번역 실패: {error_message}")
 
     def _should_render_translation(self, request_id: int, path: Path) -> bool:
@@ -250,3 +305,63 @@ class MarkdownBrowserApp(App[None]):
             self.current_file == path
             and self._active_translation_request_id == request_id
         )
+
+    async def _replace_translation_view(
+        self,
+        request_id: int,
+        path: Path,
+        markdown: str,
+        restore_saved_scroll: bool,
+    ) -> None:
+        if not self._should_render_translation(request_id, path):
+            return
+
+        viewer = self.query_one("#markdown-view", Markdown)
+        await viewer.update(markdown)
+        if not self._should_render_translation(request_id, path):
+            return
+
+        self.query_one("#viewer-switcher", ContentSwitcher).current = "markdown-view"
+        if restore_saved_scroll:
+            self._restore_scroll_for_current_view()
+
+    async def _append_translation_view(
+        self,
+        request_id: int,
+        path: Path,
+        delta: str,
+        keep_bottom: bool,
+    ) -> None:
+        if not self._should_render_translation(request_id, path):
+            return
+
+        viewer = self.query_one("#markdown-view", Markdown)
+        await viewer.append(delta)
+        if not self._should_render_translation(request_id, path):
+            return
+
+        self.query_one("#viewer-switcher", ContentSwitcher).current = "markdown-view"
+        if keep_bottom:
+            viewer.scroll_end(animate=False, immediate=False)
+
+    def _remember_current_scroll(self) -> None:
+        if self.current_file is None:
+            return
+        viewer = self.query_one("#markdown-view", Markdown)
+        self._scroll_positions[self._scroll_key()] = viewer.scroll_y
+
+    def _restore_scroll_for_current_view(self) -> None:
+        viewer = self.query_one("#markdown-view", Markdown)
+        viewer.scroll_to(
+            y=self._scroll_positions.get(self._scroll_key(), 0),
+            animate=False,
+            immediate=True,
+        )
+
+    def _scroll_key(self) -> tuple[str, str]:
+        assert self.current_file is not None
+        mode = "translated" if self.show_translation else "source"
+        return (str(self.current_file), mode)
+
+    def _cancel_translation_render_workers(self) -> None:
+        self.workers.cancel_group(self, "translation-render")
