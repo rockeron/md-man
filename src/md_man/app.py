@@ -86,7 +86,7 @@ class MarkdownBrowserApp(App[None]):
             self.current_view_markdown = self.current_markdown
             self.query_one("#markdown-view", Markdown).update(self.current_markdown)
             self.query_one("#viewer-switcher", ContentSwitcher).current = "markdown-view"
-            self.set_status(str(self.current_file))
+            self.set_status("번역 취소됨")
             return
 
         translated = self.translation_state.get_cached_translation(
@@ -111,7 +111,7 @@ class MarkdownBrowserApp(App[None]):
             self.current_view_markdown = translated
             self.query_one("#markdown-view", Markdown).update(translated)
             self.query_one("#viewer-switcher", ContentSwitcher).current = "markdown-view"
-            self.set_status("한국어 번역 보기")
+            self.set_status("캐시된 번역 불러옴")
             return
 
         self._translation_request_id += 1

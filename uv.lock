@@ -156,6 +156,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "deep-translator" },
+    { name = "platformdirs" },
     { name = "rich" },
     { name = "textual" },
 ]
@@ -169,6 +170,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "deep-translator", specifier = ">=1.11.4,<2" },
+    { name = "platformdirs", specifier = ">=4.9.4,<5" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.4.2,<9" },
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=1.2.0,<2" },
     { name = "rich", specifier = ">=14.1.0,<15" },
