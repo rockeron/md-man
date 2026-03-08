@@ -1,9 +1,30 @@
 [project]
 name = "md-man"
-version = "0.1.0"
+version = "1.0.0"
 description = "Markdown TUI viewer with translation support"
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.12"
+authors = [
+  { name = "rockeron" },
+]
+keywords = ["markdown", "tui", "textual", "terminal", "translation"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: End Users/Desktop",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Text Processing :: Markup :: Markdown",
+  "Topic :: Utilities",
+]
+[project.urls]
+Homepage = "https://github.com/rockeron/md-man"
+Repository = "https://github.com/rockeron/md-man"
+
 dependencies = [
   "deep-translator>=1.11.4,<2",
   "platformdirs>=4.9.4,<5",
@@ -26,6 +47,9 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+md_man = ["app.tcss"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
