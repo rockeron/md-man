@@ -13,9 +13,9 @@ class MarkdownTree(Tree[Path]):
         super().__init__(str(root_path), data=root_path, id="tree")
         self.guide_depth = 6
         self.show_root = True
-        self._build_tree()
+        self.reload_tree()
 
-    def _build_tree(self) -> None:
+    def reload_tree(self) -> None:
         self.reset(str(self.root_path), self.root_path)
         self.root.expand()
         self.first_file_node = None
