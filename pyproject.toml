@@ -1,0 +1,25 @@
+[project]
+name = "md-man"
+version = "0.1.0"
+description = "Markdown TUI viewer with translation support"
+readme = "docs/plans/2026-03-08-markdown-tui-design.md"
+requires-python = ">=3.12"
+dependencies = []
+
+[project.scripts]
+md-man = "md_man.main:main"
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.4.2,<9",
+]
+
+[build-system]
+requires = ["setuptools>=80.9.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
