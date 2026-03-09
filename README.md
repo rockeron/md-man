@@ -16,9 +16,18 @@ document into Korean.
 ## Requirements
 
 - Python 3.12+
-- `uv`
 
-## Setup
+## Install
+
+Install from PyPI:
+
+```bash
+python3 -m pip install mark4
+```
+
+## Development Setup
+
+For local development:
 
 ```bash
 uv sync --extra dev
@@ -27,7 +36,7 @@ uv sync --extra dev
 ## Run
 
 ```bash
-./mark4 /path/to/markdown/root
+mark4 /path/to/markdown/root
 ```
 
 You can also use:
@@ -39,9 +48,9 @@ PYTHONPATH=src .venv/bin/python -m mark4 /path/to/markdown/root
 Public-safe options:
 
 ```bash
-./mark4 --no-translate /path/to/markdown/root
-./mark4 --no-cache /path/to/markdown/root
-./mark4 --clear-cache /path/to/markdown/root
+mark4 --no-translate /path/to/markdown/root
+mark4 --no-cache /path/to/markdown/root
+mark4 --clear-cache /path/to/markdown/root
 ```
 
 ## Key Bindings
