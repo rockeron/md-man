@@ -33,7 +33,7 @@ uv sync --extra dev
 You can also use:
 
 ```bash
-PYTHONPATH=src .venv/bin/python -m md_man /path/to/markdown/root
+PYTHONPATH=src .venv/bin/python -m mark4 /path/to/markdown/root
 ```
 
 Public-safe options:

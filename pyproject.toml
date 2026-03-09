@@ -33,7 +33,7 @@ Homepage = "https://github.com/rockeron/mark4"
 Repository = "https://github.com/rockeron/mark4"
 
 [project.scripts]
-mark4 = "md_man.main:main"
+mark4 = "mark4.main:main"
 
 [project.optional-dependencies]
 dev = [
@@ -49,7 +49,7 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [tool.setuptools.package-data]
-md_man = ["app.tcss"]
+mark4 = ["app.tcss"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

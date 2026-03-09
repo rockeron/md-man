@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from md_man.scanner import scan_markdown_tree
+from mark4.scanner import scan_markdown_tree
 from textual.widgets import Tree
 from textual.widgets._tree import TreeNode
 

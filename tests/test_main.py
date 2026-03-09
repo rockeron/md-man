@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from md_man.main import parse_args
+from mark4.main import parse_args
 
 
 def test_parse_args_reads_root_path():
@@ -22,13 +22,13 @@ def test_main_clears_translation_cache_without_running_app(tmp_path, monkeypatch
     def fake_clear_cache(cache_dir: Path | None = None) -> None:
         cleared.append(cache_dir or Path("default"))
 
-    monkeypatch.setattr("md_man.main.clear_translation_cache", fake_clear_cache)
+    monkeypatch.setattr("mark4.main.clear_translation_cache", fake_clear_cache)
 
     class StubApp:
         def __init__(self, root_path: str, **kwargs) -> None:
             raise AssertionError("app should not be created when clearing cache")
 
-    from md_man.main import main
+    from mark4.main import main
 
     exit_code = main(["--clear-cache", str(tmp_path)], app_factory=StubApp)
 
@@ -54,7 +54,7 @@ def test_main_runs_app_with_root_path(tmp_path):
         def run(self) -> None:
             calls.append("run")
 
-    from md_man.main import main
+    from mark4.main import main
 
     exit_code = main([str(tmp_path)], app_factory=StubApp)
 

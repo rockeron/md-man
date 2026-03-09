@@ -1,1 +1,0 @@
-"""md_man package."""

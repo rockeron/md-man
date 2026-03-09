@@ -2,7 +2,7 @@ from pathlib import Path
 import pytest
 import time
 
-from md_man.app import MarkdownBrowserApp
+from mark4.app import MarkdownBrowserApp
 from textual.widgets import Markdown
 
 

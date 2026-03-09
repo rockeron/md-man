@@ -7,8 +7,8 @@ from textual.app import App, ComposeResult
 from textual.containers import Horizontal
 from textual.widgets import ContentSwitcher, Footer, Header, Markdown, Static
 
-from md_man.translator import DeepTranslatorProvider, DocumentTranslationState, Translator
-from md_man.widgets import MarkdownTree
+from mark4.translator import DeepTranslatorProvider, DocumentTranslationState, Translator
+from mark4.widgets import MarkdownTree
 
 
 class MarkdownBrowserApp(App[None]):

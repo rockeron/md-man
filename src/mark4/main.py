@@ -4,8 +4,8 @@ from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from typing import Callable, Protocol
 
-from md_man.app import MarkdownBrowserApp
-from md_man.translator import clear_translation_cache
+from mark4.app import MarkdownBrowserApp
+from mark4.translator import clear_translation_cache
 
 
 class RunnableApp(Protocol):

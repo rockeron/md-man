@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from md_man.translator import (
+from mark4.translator import (
     DeepTranslatorProvider,
     DocumentTranslationState,
     clear_translation_cache,

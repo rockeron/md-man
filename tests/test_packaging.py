@@ -26,10 +26,10 @@ def test_pyproject_has_public_package_metadata():
 def test_pyproject_includes_textual_css_as_package_data():
     pyproject = _load_pyproject()
 
-    assert pyproject["tool"]["setuptools"]["package-data"]["md_man"] == ["app.tcss"]
+    assert pyproject["tool"]["setuptools"]["package-data"]["mark4"] == ["app.tcss"]
 
 
 def test_pyproject_exposes_mark4_console_script():
     pyproject = _load_pyproject()
 
-    assert pyproject["project"]["scripts"]["mark4"] == "md_man.main:main"
+    assert pyproject["project"]["scripts"]["mark4"] == "mark4.main:main"

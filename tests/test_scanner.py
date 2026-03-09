@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from md_man.scanner import scan_markdown_tree
+from mark4.scanner import scan_markdown_tree
 
 
 def test_scan_markdown_tree_returns_only_markdown_files(tmp_path: Path):
